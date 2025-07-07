@@ -17,10 +17,10 @@ const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryFilterPr
           variant={selectedCategory === category.id ? "default" : "outline"}
           size="sm"
           onClick={() => onCategoryChange(category.id)}
-          className={`flex items-center space-x-2 whitespace-nowrap ${
+          className={`flex items-center space-x-2 whitespace-nowrap font-medium ${
             selectedCategory === category.id
-              ? 'bg-green-500 hover:bg-green-600 text-white'
-              : 'border-gray-300 hover:border-green-400 text-gray-700'
+              ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500'
+              : 'border-gray-300 hover:border-orange-400 text-gray-700 hover:bg-orange-50'
           }`}
         >
           <span>{category.icon}</span>
