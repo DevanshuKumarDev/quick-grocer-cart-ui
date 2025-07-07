@@ -2,11 +2,15 @@
 import React, { useState, useMemo } from 'react';
 import { Clock, MapPin, Star, Plus, Minus } from 'lucide-react';
 import Header from '@/components/Header';
+import NutritionWidget from '@/components/NutritionWidget';
+import NutritionDashboard from '@/components/NutritionDashboard';
+import DietaryPreferencesFilter from '@/components/DietaryPreferencesFilter';
 import { mockProducts, filters } from '@/data/mockData';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 
 // Category data matching Amazon Now
 const categories = [
@@ -25,6 +29,9 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [healthMode, setHealthMode] = useState(false);
+  const [selectedDietaryPreferences, setSelectedDietaryPreferences] = useState<string[]>([]);
+  const [showNutritionDashboard, setShowNutritionDashboard] = useState(false);
   const { dispatch } = useCart();
 
   const filteredProducts = useMemo(() => {
@@ -34,10 +41,12 @@ const Index = () => {
       const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
       const matchesFilters = selectedFilters.length === 0 || 
                            selectedFilters.every(filter => product.tags.includes(filter));
+      const matchesDietaryPreferences = selectedDietaryPreferences.length === 0 ||
+                                      selectedDietaryPreferences.every(pref => product.tags.includes(pref));
       
-      return matchesSearch && matchesCategory && matchesFilters;
+      return matchesSearch && matchesCategory && matchesFilters && matchesDietaryPreferences;
     });
-  }, [searchQuery, selectedCategory, selectedFilters]);
+  }, [searchQuery, selectedCategory, selectedFilters, selectedDietaryPreferences]);
 
   const handleAddToCart = (product: any) => {
     dispatch({
@@ -55,6 +64,14 @@ const Index = () => {
         fats: product.nutritionFacts.fats
       }
     });
+  };
+
+  const handleDietaryPreferenceToggle = (preference: string) => {
+    setSelectedDietaryPreferences(prev => 
+      prev.includes(preference) 
+        ? prev.filter(p => p !== preference)
+        : [...prev, preference]
+    );
   };
 
   return (
@@ -88,10 +105,35 @@ const Index = () => {
               className="w-full px-4 py-3 rounded-md border-0 text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {/* Health Mode Toggle */}
+          <div className="flex items-center justify-between mt-4 bg-white bg-opacity-20 rounded-lg px-4 py-2">
+            <div className="flex items-center space-x-2">
+              <span className="text-white font-medium text-sm">🏥 Health Mode</span>
+            </div>
+            <Switch 
+              checked={healthMode}
+              onCheckedChange={setHealthMode}
+              className="data-[state=checked]:bg-green-500"
+            />
+          </div>
         </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-4">
+        {/* Health Mode Components */}
+        {healthMode && (
+          <>
+            <div className="mt-6">
+              <NutritionWidget onOpenDashboard={() => setShowNutritionDashboard(true)} />
+            </div>
+            <DietaryPreferencesFilter 
+              selectedPreferences={selectedDietaryPreferences}
+              onPreferenceToggle={handleDietaryPreferenceToggle}
+            />
+          </>
+        )}
+
         {/* Savings Banner */}
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 my-6 text-center border border-blue-200">
           <div className="flex items-center justify-center mb-2">
@@ -263,10 +305,16 @@ const Index = () => {
         {filteredProducts.length === 0 && (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <p className="text-gray-500 text-lg mb-2">No products found matching your criteria.</p>
-            <p className="text-gray-400 text-sm">Try adjusting your search terms.</p>
+            <p className="text-gray-400 text-sm">Try adjusting your search terms or dietary preferences.</p>
           </div>
         )}
       </main>
+
+      {/* Nutrition Dashboard Modal */}
+      <NutritionDashboard 
+        isOpen={showNutritionDashboard}
+        onClose={() => setShowNutritionDashboard(false)}
+      />
     </div>
   );
 };
