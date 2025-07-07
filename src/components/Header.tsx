@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { Search, ShoppingCart, Menu } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface HeaderProps {
   onSearchChange: (query: string) => void;
@@ -19,6 +18,17 @@ const Header = ({ onSearchChange, searchQuery }: HeaderProps) => {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+      <div className="bg-blue-600 text-white px-4 py-2">
+        <div className="max-w-7xl mx-auto flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-4">
+            <span>💰 Savings for this order</span>
+          </div>
+          <div className="text-right">
+            <span className="bg-white text-blue-600 px-2 py-1 rounded font-bold">₹30 ↗</span>
+          </div>
+        </div>
+      </div>
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
@@ -26,27 +36,17 @@ const Header = ({ onSearchChange, searchQuery }: HeaderProps) => {
               <Menu className="h-5 w-5" />
             </Button>
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">QC</span>
+              <div className="font-bold text-xl text-gray-900">
+                <span className="text-black">amazon</span>
+                <span className="text-blue-600 ml-1">now</span>
               </div>
-              <span className="font-bold text-xl text-gray-900 hidden sm:block">QuickCart</span>
             </Link>
           </div>
 
-          <div className="flex-1 max-w-lg mx-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search for products..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full rounded-full border-gray-300 focus:border-green-500 focus:ring-green-500"
-              />
-            </div>
-          </div>
-
           <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="sm">
+              <Search className="h-5 w-5" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"

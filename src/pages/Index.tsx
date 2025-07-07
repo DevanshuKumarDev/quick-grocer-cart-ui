@@ -1,20 +1,31 @@
 
 import React, { useState, useMemo } from 'react';
-import { Activity } from 'lucide-react';
+import { Clock, MapPin, Star, Plus, Minus } from 'lucide-react';
 import Header from '@/components/Header';
-import ProductCard from '@/components/ProductCard';
-import CategoryFilter from '@/components/CategoryFilter';
-import NutritionDashboard from '@/components/NutritionDashboard';
 import { mockProducts, filters } from '@/data/mockData';
+import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+// Category data matching Amazon Now
+const categories = [
+  { id: 'top-picks', name: 'Top Picks', icon: '⭐' },
+  { id: 'monsoon', name: 'Monsoon Essentials', icon: '☂️' },
+  { id: 'fresh', name: 'Fresh Vegetables', icon: '🥬' },
+  { id: 'dairy', name: 'Dairy, Bread & Eggs', icon: '🥛' },
+  { id: 'fruits', name: 'Fresh Fruits', icon: '🍎' },
+  { id: 'oils', name: 'Oils, Ghee & Masala', icon: '🛢️' },
+  { id: 'laundry', name: 'Laundry Detergents', icon: '🧺' },
+  { id: 'dishwashing', name: 'Dishwashing Supplies', icon: '🧽' },
+  { id: 'rice', name: 'Rice, Atta & Dal', icon: '🌾' },
+];
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [showNutrition, setShowNutrition] = useState(false);
+  const { dispatch } = useCart();
 
   const filteredProducts = useMemo(() => {
     return mockProducts.filter((product) => {
@@ -28,104 +39,234 @@ const Index = () => {
     });
   }, [searchQuery, selectedCategory, selectedFilters]);
 
-  const handleFilterChange = (filterId: string, checked: boolean) => {
-    setSelectedFilters(prev =>
-      checked
-        ? [...prev, filterId]
-        : prev.filter(id => id !== filterId)
-    );
+  const handleAddToCart = (product: any) => {
+    dispatch({
+      type: 'ADD_ITEM',
+      payload: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        image: product.image,
+        weight: product.weight,
+        calories: product.nutritionFacts.calories,
+        protein: product.nutritionFacts.protein,
+        carbs: product.nutritionFacts.carbs,
+        fats: product.nutritionFacts.fats
+      }
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header 
-        onSearchChange={setSearchQuery} 
-        searchQuery={searchQuery}
-      />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Amazon-style banner */}
-        <div className="amazon-gradient rounded-lg p-6 mb-6 text-white">
-          <h2 className="text-2xl font-bold mb-2">Fresh groceries delivered in 30 minutes</h2>
-          <p className="text-lg opacity-95">Free delivery on orders over $35</p>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Filters */}
-          <aside className="lg:w-64 space-y-6">
-            <div className="bg-white rounded-lg amazon-shadow p-4 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4 text-lg">Shop by Category</h3>
-              <CategoryFilter
-                selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-              />
-            </div>
-
-            <div className="bg-white rounded-lg amazon-shadow p-4 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4 text-lg">Dietary Preferences</h3>
-              <div className="space-y-3">
-                {filters.map((filter) => (
-                  <div key={filter.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={filter.id}
-                      checked={selectedFilters.includes(filter.id)}
-                      onCheckedChange={(checked) => 
-                        handleFilterChange(filter.id, checked as boolean)
-                      }
-                    />
-                    <Label
-                      htmlFor={filter.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {filter.name}
-                    </Label>
-                  </div>
-                ))}
+    <div className="min-h-screen bg-white">
+      {/* Amazon Now Header */}
+      <div className="bg-gradient-to-r from-blue-400 to-blue-300 px-4 py-3">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <div className="bg-yellow-400 text-black px-2 py-1 rounded font-bold text-sm flex items-center">
+                <Clock className="h-4 w-4 mr-1" />
+                10 mins
+              </div>
+              <div className="text-white">
+                Deliver to Bengaluru 560048
               </div>
             </div>
-
-            <Button
-              onClick={() => setShowNutrition(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-            >
-              <Activity className="h-4 w-4 mr-2" />
-              Nutrition Dashboard
-            </Button>
-          </aside>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                  Fresh Groceries
-                </h1>
-                <p className="text-gray-600">
-                  {filteredProducts.length} products available
-                </p>
-              </div>
+            <div className="text-right">
+              <div className="text-white font-bold">amazon</div>
+              <div className="text-white text-blue-700 font-bold">now</div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg amazon-shadow">
-                <p className="text-gray-500 text-lg mb-2">No products found matching your criteria.</p>
-                <p className="text-gray-400 text-sm">Try adjusting your filters or search terms.</p>
-              </div>
-            )}
+          </div>
+          
+          {/* Search Bar */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search for products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-3 rounded-md border-0 text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
-      </main>
+      </div>
 
-      <NutritionDashboard
-        isOpen={showNutrition}
-        onClose={() => setShowNutrition(false)}
-      />
+      <main className="max-w-7xl mx-auto px-4">
+        {/* Savings Banner */}
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 my-6 text-center border border-blue-200">
+          <div className="flex items-center justify-center mb-2">
+            <span className="text-2xl mr-2">💰</span>
+            <span className="font-bold text-gray-800">UNBELIEVABLE SAVINGS OF</span>
+            <span className="text-2xl ml-2">💰</span>
+          </div>
+          <div className="text-4xl font-bold text-yellow-600 mb-2">₹18,720</div>
+          <div className="text-gray-600 font-semibold">IN 1 YEAR*</div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="text-blue-600 font-bold text-lg mb-1">₹50 CASHBACK</div>
+              <div className="text-sm text-gray-600 mb-2">on all orders above ₹399</div>
+              <div className="flex justify-between text-sm">
+                <span>₹50</span>
+                <span>₹10,400</span>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="text-blue-600 font-bold text-lg mb-1">FREE DELIVERY</div>
+              <div className="text-sm text-gray-600 mb-2">on all orders above ₹199</div>
+              <div className="flex justify-between text-sm">
+                <span>₹30</span>
+                <span>₹6,240</span>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="text-blue-600 font-bold text-lg mb-1">NO HANDLING FEE</div>
+              <div className="text-sm text-gray-600 mb-2">on all orders</div>
+              <div className="flex justify-between text-sm">
+                <span>₹10</span>
+                <span>₹2,080</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recommended Categories */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Recommended for you</h2>
+          <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
+            {categories.map((category) => (
+              <div
+                key={category.id}
+                className={`flex-shrink-0 text-center cursor-pointer p-3 rounded-lg ${
+                  selectedCategory === category.id 
+                    ? 'bg-blue-100 border-b-2 border-blue-500' 
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => setSelectedCategory(category.id)}
+              >
+                <div className="text-3xl mb-2">{category.icon}</div>
+                <div className="text-xs text-gray-700 font-medium w-20">{category.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Free Delivery Banner */}
+        <div className="bg-gray-100 rounded-lg p-4 mb-6 flex items-center">
+          <div className="bg-white rounded-full p-2 mr-3">
+            🚚
+          </div>
+          <div>
+            <div className="font-bold text-gray-800">Get Free delivery</div>
+            <div className="text-sm text-gray-600">Add items worth ₹144 or more</div>
+          </div>
+        </div>
+
+        {/* Products Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+          {filteredProducts.slice(0, 20).map((product) => (
+            <Card key={product.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+              {/* Discount Badge */}
+              <div className="absolute top-2 left-2 z-10">
+                <Badge className="bg-orange-500 text-white font-bold">
+                  {Math.floor(Math.random() * 50 + 10)}% OFF
+                </Badge>
+              </div>
+              
+              <div className="aspect-square bg-gray-100">
+                <img
+                  src={`https://images.unsplash.com/${product.image}?w=200&h=200&fit=crop`}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              <CardContent className="p-3">
+                <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
+                  {product.name}
+                </h3>
+                <p className="text-xs text-gray-500 mb-2">{product.weight}</p>
+                
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-1">
+                    <span className="font-bold text-gray-900">₹{product.price}</span>
+                    <span className="text-xs text-gray-400 line-through">
+                      ₹{Math.floor(product.price * 1.3)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center border border-gray-300 rounded">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="px-2 text-sm font-medium">1</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleAddToCart(product)}
+                    className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-1 rounded"
+                  >
+                    Add
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Promotional Banner */}
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg p-6 mb-8 text-white text-center">
+          <div className="flex items-center justify-center mb-4">
+            <div className="mr-4">
+              <div className="text-2xl mb-2">🌧️</div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold mb-2">Monsoon must-haves</h3>
+              <p className="text-blue-100 mb-4">- UP TO 70% OFF -</p>
+              <Button className="bg-white text-blue-600 hover:bg-gray-100 font-bold">
+                Order now
+              </Button>
+            </div>
+            <div className="ml-4">
+              <div className="text-2xl mb-2">👧</div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-5 gap-4 mt-6">
+            {['Rain Protection', 'Tea & Coffee', 'Powerful Essentials', 'Maggie & More', 'Cough & Cold Care'].map((item) => (
+              <div key={item} className="bg-white bg-opacity-20 rounded-lg p-3">
+                <div className="text-xs font-medium">{item}</div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 text-sm">
+            <span className="bg-yellow-400 text-black px-2 py-1 rounded font-bold mr-2">⚡</span>
+            NO ADDITIONAL CHARGES DURING RAINY WEATHER
+            <span className="bg-yellow-400 text-black px-2 py-1 rounded font-bold ml-2">⚡</span>
+          </div>
+        </div>
+
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <p className="text-gray-500 text-lg mb-2">No products found matching your criteria.</p>
+            <p className="text-gray-400 text-sm">Try adjusting your search terms.</p>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

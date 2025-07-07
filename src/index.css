@@ -120,4 +120,19 @@ All colors MUST be HSL.
   .amazon-shadow {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .amazon-now-gradient {
+    background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
+  }
+  
+  .discount-badge {
+    background: linear-gradient(45deg, #FF6B35 0%, #FF8E53 100%);
+  }
 }
