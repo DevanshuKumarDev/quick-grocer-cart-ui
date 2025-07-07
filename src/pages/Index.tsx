@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Clock, MapPin, Star, Plus, Minus, Search } from 'lucide-react';
 import Header from '@/components/Header';
+import ProductCard from '@/components/ProductCard';
 import NutritionWidget from '@/components/NutritionWidget';
 import NutritionDashboard from '@/components/NutritionDashboard';
 import DietaryPreferencesFilter from '@/components/DietaryPreferencesFilter';
@@ -81,7 +82,7 @@ const Index = () => {
       {/* Amazon Now Header */}
       <div className="bg-gradient-to-r from-blue-400 to-blue-300 px-4 py-3">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
+          <div className="grid grid-cols-3 items-center mb-4">
             <div className="flex items-center space-x-2">
               <div className="bg-yellow-400 text-black px-2 py-1 rounded font-bold text-sm flex items-center">
                 <Clock className="h-4 w-4 mr-1" />
@@ -91,11 +92,13 @@ const Index = () => {
                 Deliver to Bengaluru 560048
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <div className="text-white font-bold">amazon</div>
-                <div className="text-white text-blue-700 font-bold">now</div>
+            <div className="text-center">
+              <div className="font-bold text-xl">
+                <span className="text-black">amazon</span>
+                <span className="text-blue-600 ml-1">now</span>
               </div>
+            </div>
+            <div className="flex justify-end">
               <Button
                 variant="ghost"
                 onClick={() => setShowCart(true)}
@@ -234,74 +237,11 @@ const Index = () => {
         {/* Products Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {filteredProducts.slice(0, 20).map((product) => (
-            <Card 
+            <ProductCard 
               key={product.id} 
-              className="relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => handleProductClick(product)}
-            >
-              {/* Discount Badge */}
-              <div className="absolute top-2 left-2 z-10">
-                <Badge className="bg-orange-500 text-white font-bold">
-                  {product.discountPercentage}% OFF
-                </Badge>
-              </div>
-              
-              <div className="aspect-square bg-gray-100">
-                <img
-                  src={`https://images.unsplash.com/${product.image}?w=200&h=200&fit=crop`}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              
-              <CardContent className="p-3">
-                <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
-                  {product.name}
-                </h3>
-                <p className="text-xs text-gray-500 mb-2">{product.weight}</p>
-                
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-1">
-                    <span className="font-bold text-gray-900">₹{product.price}</span>
-                    <span className="text-xs text-gray-400 line-through">
-                      ₹{product.originalPrice}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center border border-gray-300 rounded">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 hover:bg-gray-100"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <span className="px-2 text-sm font-medium">1</span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 hover:bg-gray-100"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(product);
-                    }}
-                    className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-1 rounded"
-                  >
-                    Add
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              product={product} 
+              onProductClick={handleProductClick}
+            />
           ))}
         </div>
 

@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Product } from '@/data/mockData';
+import { Product } from '@/data/enhancedMockData';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,11 +10,15 @@ import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
   product: Product;
+  onProductClick?: (product: Product) => void;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
-  const { dispatch } = useCart();
-  const [quantity, setQuantity] = useState(0);
+const ProductCard = ({ product, onProductClick }: ProductCardProps) => {
+  const { dispatch, state } = useCart();
+  
+  // Get the current quantity from cart state
+  const cartItem = state.items.find(item => item.id === product.id);
+  const quantity = cartItem ? cartItem.quantity : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -35,21 +39,46 @@ const ProductCard = ({ product }: ProductCardProps) => {
         fats: product.nutritionFacts.fats
       }
     });
-    setQuantity(quantity + 1);
   };
 
-  const handleQuantityChange = (change: number) => {
-    const newQuantity = Math.max(0, quantity + change);
-    setQuantity(newQuantity);
+  const handleQuantityChange = (change: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const newQuantity = quantity + change;
+    
+    if (newQuantity <= 0) {
+      dispatch({
+        type: 'REMOVE_ITEM',
+        payload: product.id
+      });
+    } else {
+      dispatch({
+        type: 'UPDATE_QUANTITY',
+        payload: {
+          id: product.id,
+          quantity: newQuantity
+        }
+      });
+    }
   };
 
-  // Generate random discount percentage
-  const discountPercentage = Math.floor(Math.random() * 50 + 10);
-  const originalPrice = Math.floor(product.price * 1.3);
+  // Use the discount percentage and original price from the product data
+  const discountPercentage = product.discountPercentage;
+  const originalPrice = product.originalPrice;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only trigger product click if onProductClick is provided and the click wasn't on a button
+    if (onProductClick && !(e.target as HTMLElement).closest('button')) {
+      onProductClick(product);
+    }
+  };
 
   return (
-    <Link to={`/product/${product.id}`}>
-      <Card className="relative overflow-hidden hover:shadow-lg transition-all duration-200 border border-gray-200">
+    <Card 
+      className="relative overflow-hidden hover:shadow-lg transition-all duration-200 border border-gray-200 cursor-pointer"
+      onClick={handleCardClick}
+    >
         {/* Discount Badge */}
         <div className="absolute top-2 left-2 z-10">
           <Badge className="bg-orange-500 text-white font-bold text-xs px-2 py-1">
@@ -103,11 +132,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleQuantityChange(-1);
-                  }}
+                  onClick={(e) => handleQuantityChange(-1, e)}
                   className="h-8 w-8 p-0 hover:bg-gray-100"
                 >
                   <Minus className="h-3 w-3" />
@@ -116,11 +141,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleQuantityChange(1);
-                  }}
+                  onClick={(e) => handleQuantityChange(1, e)}
                   className="h-8 w-8 p-0 hover:bg-gray-100"
                 >
                   <Plus className="h-3 w-3" />
@@ -129,8 +150,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
             )}
           </div>
         </CardContent>
-      </Card>
-    </Link>
+    </Card>
   );
 };
 

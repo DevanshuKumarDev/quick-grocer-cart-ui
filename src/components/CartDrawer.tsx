@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { X, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ interface CartDrawerProps {
 }
 
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
+  const navigate = useNavigate();
   const { state, dispatch } = useCart();
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -166,8 +168,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
             <Button 
               className="w-full mt-4 bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 text-lg rounded-lg"
               onClick={() => {
-                // Navigate to checkout
                 onClose();
+                navigate('/checkout');
               }}
             >
               Proceed to pay
