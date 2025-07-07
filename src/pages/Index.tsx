@@ -1,54 +1,49 @@
-
 import React, { useState, useMemo } from 'react';
-import { Clock, MapPin, Star, Plus, Minus } from 'lucide-react';
+import { Clock, MapPin, Star, Plus, Minus, Search } from 'lucide-react';
 import Header from '@/components/Header';
 import NutritionWidget from '@/components/NutritionWidget';
 import NutritionDashboard from '@/components/NutritionDashboard';
 import DietaryPreferencesFilter from '@/components/DietaryPreferencesFilter';
-import { mockProducts, filters } from '@/data/mockData';
+import ProductDetailSheet from '@/components/ProductDetailSheet';
+import CartDrawer from '@/components/CartDrawer';
+import EnhancedFilters from '@/components/EnhancedFilters';
+import { enhancedMockProducts, enhancedCategories, Product } from '@/data/enhancedMockData';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 
-// Category data matching Amazon Now
-const categories = [
-  { id: 'top-picks', name: 'Top Picks', icon: '⭐' },
-  { id: 'monsoon', name: 'Monsoon Essentials', icon: '☂️' },
-  { id: 'fresh', name: 'Fresh Vegetables', icon: '🥬' },
-  { id: 'dairy', name: 'Dairy, Bread & Eggs', icon: '🥛' },
-  { id: 'fruits', name: 'Fresh Fruits', icon: '🍎' },
-  { id: 'oils', name: 'Oils, Ghee & Masala', icon: '🛢️' },
-  { id: 'laundry', name: 'Laundry Detergents', icon: '🧺' },
-  { id: 'dishwashing', name: 'Dishwashing Supplies', icon: '🧽' },
-  { id: 'rice', name: 'Rice, Atta & Dal', icon: '🌾' },
-];
-
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [healthMode, setHealthMode] = useState(false);
   const [selectedDietaryPreferences, setSelectedDietaryPreferences] = useState<string[]>([]);
   const [showNutritionDashboard, setShowNutritionDashboard] = useState(false);
-  const { dispatch } = useCart();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showProductDetail, setShowProductDetail] = useState(false);
+  const [showCart, setShowCart] = useState(false);
+  const { dispatch, state } = useCart();
 
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter((product) => {
+    return enhancedMockProducts.filter((product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+                          product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
       const matchesFilters = selectedFilters.length === 0 || 
-                           selectedFilters.every(filter => product.tags.includes(filter));
+                           selectedFilters.some(filter => product.tags.includes(filter));
       const matchesDietaryPreferences = selectedDietaryPreferences.length === 0 ||
-                                      selectedDietaryPreferences.every(pref => product.tags.includes(pref));
+                                      selectedDietaryPreferences.some(pref => product.tags.includes(pref));
+      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       
-      return matchesSearch && matchesCategory && matchesFilters && matchesDietaryPreferences;
+      return matchesSearch && matchesCategory && matchesFilters && matchesDietaryPreferences && matchesPrice;
     });
-  }, [searchQuery, selectedCategory, selectedFilters, selectedDietaryPreferences]);
+  }, [searchQuery, selectedCategory, selectedFilters, selectedDietaryPreferences, priceRange]);
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     dispatch({
       type: 'ADD_ITEM',
       payload: {
@@ -66,6 +61,11 @@ const Index = () => {
     });
   };
 
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setShowProductDetail(true);
+  };
+
   const handleDietaryPreferenceToggle = (preference: string) => {
     setSelectedDietaryPreferences(prev => 
       prev.includes(preference) 
@@ -73,6 +73,8 @@ const Index = () => {
         : [...prev, preference]
     );
   };
+
+  const totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="min-h-screen bg-white">
@@ -89,20 +91,35 @@ const Index = () => {
                 Deliver to Bengaluru 560048
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-white font-bold">amazon</div>
-              <div className="text-white text-blue-700 font-bold">now</div>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <div className="text-white font-bold">amazon</div>
+                <div className="text-white text-blue-700 font-bold">now</div>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => setShowCart(true)}
+                className="text-white hover:bg-blue-500 relative"
+              >
+                🛒
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </Button>
             </div>
           </div>
           
           {/* Search Bar */}
           <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
               placeholder="Search for products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 rounded-md border-0 text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-3 rounded-md border-0 text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -133,6 +150,16 @@ const Index = () => {
             />
           </>
         )}
+
+        {/* Enhanced Filters */}
+        <div className="mt-6">
+          <EnhancedFilters
+            selectedFilters={selectedFilters}
+            onFilterChange={setSelectedFilters}
+            priceRange={priceRange}
+            onPriceRangeChange={setPriceRange}
+          />
+        </div>
 
         {/* Savings Banner */}
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 my-6 text-center border border-blue-200">
@@ -176,7 +203,7 @@ const Index = () => {
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Recommended for you</h2>
           <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
-            {categories.map((category) => (
+            {enhancedCategories.map((category) => (
               <div
                 key={category.id}
                 className={`flex-shrink-0 text-center cursor-pointer p-3 rounded-lg ${
@@ -207,11 +234,15 @@ const Index = () => {
         {/* Products Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {filteredProducts.slice(0, 20).map((product) => (
-            <Card key={product.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+            <Card 
+              key={product.id} 
+              className="relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => handleProductClick(product)}
+            >
               {/* Discount Badge */}
               <div className="absolute top-2 left-2 z-10">
                 <Badge className="bg-orange-500 text-white font-bold">
-                  {Math.floor(Math.random() * 50 + 10)}% OFF
+                  {product.discountPercentage}% OFF
                 </Badge>
               </div>
               
@@ -233,7 +264,7 @@ const Index = () => {
                   <div className="flex items-center space-x-1">
                     <span className="font-bold text-gray-900">₹{product.price}</span>
                     <span className="text-xs text-gray-400 line-through">
-                      ₹{Math.floor(product.price * 1.3)}
+                      ₹{product.originalPrice}
                     </span>
                   </div>
                 </div>
@@ -244,6 +275,7 @@ const Index = () => {
                       size="sm"
                       variant="ghost"
                       className="h-8 w-8 p-0 hover:bg-gray-100"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
@@ -252,13 +284,17 @@ const Index = () => {
                       size="sm"
                       variant="ghost"
                       className="h-8 w-8 p-0 hover:bg-gray-100"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => handleAddToCart(product)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product);
+                    }}
                     className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-1 rounded"
                   >
                     Add
@@ -305,10 +341,23 @@ const Index = () => {
         {filteredProducts.length === 0 && (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <p className="text-gray-500 text-lg mb-2">No products found matching your criteria.</p>
-            <p className="text-gray-400 text-sm">Try adjusting your search terms or dietary preferences.</p>
+            <p className="text-gray-400 text-sm">Try adjusting your search terms or filters.</p>
           </div>
         )}
       </main>
+
+      {/* Product Detail Sheet */}
+      <ProductDetailSheet
+        product={selectedProduct}
+        isOpen={showProductDetail}
+        onClose={() => setShowProductDetail(false)}
+      />
+
+      {/* Cart Drawer */}
+      <CartDrawer
+        isOpen={showCart}
+        onClose={() => setShowCart(false)}
+      />
 
       {/* Nutrition Dashboard Modal */}
       <NutritionDashboard 
