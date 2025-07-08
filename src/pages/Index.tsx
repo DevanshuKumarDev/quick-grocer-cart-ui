@@ -98,7 +98,14 @@ const Index = () => {
                 <span className="text-blue-600 ml-1">now</span>
               </div>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="ghost"
+                onClick={() => setShowNutritionDashboard(true)}
+                className="text-white hover:bg-blue-500"
+              >
+                📊 Dashboard
+              </Button>
               <Button
                 variant="ghost"
                 onClick={() => setShowCart(true)}

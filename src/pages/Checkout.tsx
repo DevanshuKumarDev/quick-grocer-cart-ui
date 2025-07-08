@@ -6,6 +6,7 @@ import { enhancedMockProducts } from '@/data/enhancedMockData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { orderApiService, type OrderData } from '@/services/orderApi';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -46,10 +47,30 @@ const Checkout = () => {
     });
   };
 
-  const handleProceedToPay = () => {
-    // In a real app, this would handle payment processing
-    dispatch({ type: 'CLEAR_CART' });
-    navigate('/order-confirmation');
+  const handleProceedToPay = async () => {
+    try {
+      // Prepare order data in the required format
+      const orderData: OrderData = {
+        date: parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, '')), // YYYYMMDD format
+        total_amount: finalTotal,
+        items: state.items.map(item => ({
+          name: item.name,
+          description: enhancedMockProducts.find(p => p.id === item.id)?.description || null,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      };
+
+      // Submit order to backend
+      await orderApiService.submitOrder(orderData);
+      
+      // Clear cart and navigate to confirmation
+      dispatch({ type: 'CLEAR_CART' });
+      navigate('/order-confirmation');
+    } catch (error) {
+      console.error('Failed to submit order:', error);
+      alert('Failed to submit order. Please try again.');
+    }
   };
 
   // Calculate totals
