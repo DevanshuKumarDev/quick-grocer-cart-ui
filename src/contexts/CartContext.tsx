@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 
 export interface CartItem {
   id: string;
@@ -76,8 +76,38 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
   }
 };
 
+// Helper functions for localStorage
+const loadCartFromStorage = (): CartState => {
+  try {
+    const savedCart = localStorage.getItem('quick-grocer-cart');
+    if (savedCart) {
+      const parsedCart = JSON.parse(savedCart);
+      return {
+        items: parsedCart.items || [],
+        total: parsedCart.total || 0
+      };
+    }
+  } catch (error) {
+    console.error('Error loading cart from localStorage:', error);
+  }
+  return { items: [], total: 0 };
+};
+
+const saveCartToStorage = (state: CartState) => {
+  try {
+    localStorage.setItem('quick-grocer-cart', JSON.stringify(state));
+  } catch (error) {
+    console.error('Error saving cart to localStorage:', error);
+  }
+};
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [state, dispatch] = useReducer(cartReducer, { items: [], total: 0 });
+  const [state, dispatch] = useReducer(cartReducer, loadCartFromStorage());
+
+  // Save to localStorage whenever cart state changes
+  useEffect(() => {
+    saveCartToStorage(state);
+  }, [state]);
 
   return (
     <CartContext.Provider value={{ state, dispatch }}>

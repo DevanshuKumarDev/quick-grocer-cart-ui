@@ -68,9 +68,13 @@ const ProductDetailSheet = ({ product, isOpen, onClose }: ProductDetailSheetProp
           {/* Product Image */}
           <div className="mb-6">
             <img
-              src={`https://images.unsplash.com/${product.image}?w=400&h=300&fit=crop`}
+              src={product.image}
               alt={product.name}
               className="w-full h-64 object-cover rounded-lg"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder.svg';
+              }}
             />
           </div>
 

@@ -73,9 +73,13 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               {state.items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 bg-gray-50 p-3 rounded-lg">
                   <img
-                    src={`https://images.unsplash.com/${item.image}?w=60&h=60&fit=crop`}
+                    src={item.image}
                     alt={item.name}
                     className="w-12 h-12 object-cover rounded"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
                   />
                   
                   <div className="flex-1">

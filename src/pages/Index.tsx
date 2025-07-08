@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Clock, MapPin, Star, Plus, Minus, Search } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Clock, MapPin, Star, Plus, Minus, Search, Loader2 } from 'lucide-react';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import NutritionWidget from '@/components/NutritionWidget';
@@ -8,7 +8,8 @@ import DietaryPreferencesFilter from '@/components/DietaryPreferencesFilter';
 import ProductDetailSheet from '@/components/ProductDetailSheet';
 import CartDrawer from '@/components/CartDrawer';
 import EnhancedFilters from '@/components/EnhancedFilters';
-import { enhancedMockProducts, enhancedCategories, Product } from '@/data/enhancedMockData';
+import { enhancedCategories, Product } from '@/data/enhancedMockData';
+import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,21 +29,90 @@ const Index = () => {
   const [showCart, setShowCart] = useState(false);
   const { dispatch, state } = useCart();
 
+  // Use API hooks
+  const { products, loading, error, fetchProducts, pagination } = useProducts({
+    limit: 20,
+    sortBy: 'name',
+    sortOrder: 'asc'
+  });
+
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Filter products based on user selections
   const filteredProducts = useMemo(() => {
-    return enhancedMockProducts.filter((product) => {
+    return allProducts.filter((product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           product.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
       const matchesFilters = selectedFilters.length === 0 || 
                            selectedFilters.some(filter => product.tags.includes(filter));
       const matchesDietaryPreferences = selectedDietaryPreferences.length === 0 ||
                                       selectedDietaryPreferences.some(pref => product.tags.includes(pref));
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       
-      return matchesSearch && matchesCategory && matchesFilters && matchesDietaryPreferences && matchesPrice;
+      return matchesSearch && matchesFilters && matchesDietaryPreferences;
     });
-  }, [searchQuery, selectedCategory, selectedFilters, selectedDietaryPreferences, priceRange]);
+  }, [allProducts, searchQuery, selectedFilters, selectedDietaryPreferences]);
+
+  // Fetch products when filters change
+  useEffect(() => {
+    const filters: any = {};
+    
+    if (searchQuery) filters.search = searchQuery;
+    if (selectedCategory !== 'all') filters.category = selectedCategory;
+    if (priceRange[0] > 0) filters.minPrice = priceRange[0];
+    if (priceRange[1] < 1000) filters.maxPrice = priceRange[1];
+    
+    setCurrentPage(1);
+    setAllProducts([]);
+    
+    fetchProducts({
+      ...filters,
+      limit: 20,
+      page: 1,
+      sortBy: 'name',
+      sortOrder: 'asc'
+    });
+  }, [searchQuery, selectedCategory, priceRange, fetchProducts]);
+
+  // Update allProducts when products change
+  useEffect(() => {
+    if (currentPage === 1) {
+      setAllProducts(products);
+    } else {
+      setAllProducts(prev => [...prev, ...products]);
+    }
+  }, [products, currentPage]);
+
+  // Load more products
+  const handleLoadMore = async () => {
+    if (loadingMore || !pagination?.hasNext) return;
+    
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+    
+    const filters: any = {};
+    if (searchQuery) filters.search = searchQuery;
+    if (selectedCategory !== 'all') filters.category = selectedCategory;
+    if (priceRange[0] > 0) filters.minPrice = priceRange[0];
+    if (priceRange[1] < 1000) filters.maxPrice = priceRange[1];
+    
+    try {
+      await fetchProducts({
+        ...filters,
+        limit: 20,
+        page: nextPage,
+        sortBy: 'name',
+        sortOrder: 'asc'
+      });
+      setCurrentPage(nextPage);
+    } catch (error) {
+      console.error('Error loading more products:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleAddToCart = (product: Product) => {
     dispatch({
@@ -234,16 +304,69 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <span className="ml-2 text-gray-600">Loading fresh products...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8 text-center">
+            <div className="text-red-600 font-semibold mb-2">Unable to load products</div>
+            <div className="text-red-500 text-sm mb-4">{error}</div>
+            <Button 
+              onClick={() => fetchProducts({ limit: 50, sortBy: 'name', sortOrder: 'asc' })}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Try Again
+            </Button>
+          </div>
+        )}
+
         {/* Products Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-          {filteredProducts.slice(0, 20).map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onProductClick={handleProductClick}
-            />
-          ))}
-        </div>
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+              {filteredProducts.map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  onProductClick={handleProductClick}
+                />
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {pagination?.hasNext && !loading && (
+              <div className="text-center mb-8">
+                <Button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading more products...
+                    </>
+                  ) : (
+                    `Load More Products (${pagination.totalProducts - allProducts.length} remaining)`
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Products Count Info */}
+            {pagination && (
+              <div className="text-center text-gray-500 text-sm mb-8">
+                Showing {allProducts.length} of {pagination.totalProducts} products
+              </div>
+            )}
+          </>
+        )}
 
         {/* Promotional Banner */}
         <div className="bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg p-6 mb-8 text-white text-center">

@@ -145,9 +145,13 @@ const Checkout = () => {
               return (
                 <div key={item.id} className="flex items-center space-x-4 py-4 border-b border-gray-100">
                   <img
-                    src={`https://images.unsplash.com/${item.image}?w=80&h=80&fit=crop`}
+                    src={item.image}
                     alt={item.name}
                     className="w-16 h-16 object-cover rounded"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
                   />
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900">{item.name}</h3>
@@ -216,9 +220,13 @@ const Checkout = () => {
                 
                 <div className="aspect-square bg-gray-100">
                   <img
-                    src={`https://images.unsplash.com/${product.image}?w=150&h=150&fit=crop`}
+                    src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
                   />
                 </div>
                 

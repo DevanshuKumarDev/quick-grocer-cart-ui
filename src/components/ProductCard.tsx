@@ -89,9 +89,13 @@ const ProductCard = ({ product, onProductClick }: ProductCardProps) => {
         {/* Product Image */}
         <div className="aspect-square bg-gray-50 relative">
           <img
-            src={`https://images.unsplash.com/${product.image}?w=250&h=250&fit=crop`}
+            src={product.image || '/placeholder.svg'}
             alt={product.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/placeholder.svg';
+            }}
           />
           {!product.inStock && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
